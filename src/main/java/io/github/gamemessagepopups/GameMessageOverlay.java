@@ -23,11 +23,10 @@ final class GameMessageOverlay extends Overlay
 	private List<MessageQueue.Popup> currentPopups = List.of();
 	private List<String> currentTexts = List.of();
 	private List<String> layoutTexts = List.of();
-	private Font layoutFont;
+	private Appearance layoutAppearance;
 	private int layoutWidth;
 	private int layoutHeight;
 	private MessageLayout layout = MessageLayout.EMPTY;
-	private Color layoutColor;
 
 	GameMessageOverlay(GameMessagePopupsPlugin plugin, GameMessagePopupsConfig config)
 	{
@@ -76,13 +75,11 @@ final class GameMessageOverlay extends Overlay
 
 		int width = Math.min(viewport.width, current.maxWidth);
 		int height = viewport.height;
-		if (!texts.equals(layoutTexts) || !current.font.equals(layoutFont) || !current.color.equals(layoutColor)
-			|| width != layoutWidth || height != layoutHeight)
+		if (!texts.equals(layoutTexts) || current != layoutAppearance || width != layoutWidth || height != layoutHeight)
 		{
-			layout = MessageLayout.wrap(texts, current.font, current.color, width, height);
+			layout = MessageLayout.wrap(texts, current.font, current.color, current.outline, current.shadow, width, height);
 			layoutTexts = texts;
-			layoutFont = current.font;
-			layoutColor = current.color;
+			layoutAppearance = current;
 			layoutWidth = width;
 			layoutHeight = height;
 		}
@@ -146,6 +143,8 @@ final class GameMessageOverlay extends Overlay
 	{
 		private final Font font;
 		private final Color color;
+		private final boolean outline;
+		private final boolean shadow;
 		private final int maxWidth;
 		private final int horizontalPercent;
 		private final int verticalPercent;
@@ -153,10 +152,12 @@ final class GameMessageOverlay extends Overlay
 
 		private Appearance(GameMessagePopupsConfig config)
 		{
-			String family = config.fontFamily().strip();
-			font = new Font(family.isEmpty() ? Font.SANS_SERIF : family, Font.BOLD,
+			String family = config.fontFamily().resolve(config.customFontFamily());
+			font = new Font(family, config.bold() ? Font.BOLD : Font.PLAIN,
 				clamp(config.fontSize(), GameMessagePopupsConfig.MIN_FONT_SIZE, GameMessagePopupsConfig.MAX_FONT_SIZE));
 			color = config.textColor();
+			outline = config.outline();
+			shadow = config.shadow();
 			maxWidth = clamp(config.maxTextWidth(), GameMessagePopupsConfig.MIN_TEXT_WIDTH, GameMessagePopupsConfig.MAX_TEXT_WIDTH);
 			horizontalPercent = clamp(config.horizontalPercent(), 0, 100);
 			verticalPercent = clamp(config.verticalPercent(), 0, 100);

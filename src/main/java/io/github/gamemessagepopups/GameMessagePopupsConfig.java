@@ -1,7 +1,6 @@
 package io.github.gamemessagepopups;
 
 import java.awt.Color;
-import java.awt.Font;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -12,6 +11,8 @@ import net.runelite.client.config.Range;
 public interface GameMessagePopupsConfig extends Config
 {
 	String GROUP = "gameMessagePopups";
+	String FONT_FAMILY = "fontFamilyChoice";
+	String CUSTOM_FONT_FAMILY = "customFontFamily";
 	int MIN_FONT_SIZE = 10;
 	int MAX_FONT_SIZE = 48;
 	int MAX_DELAY_MS = 5000;
@@ -53,30 +54,54 @@ public interface GameMessagePopupsConfig extends Config
 		return 18;
 	}
 
-	@ConfigItem(keyName = "fontFamily", name = "Font family", description = "A font family installed on your computer, or a Java family such as SansSerif, Serif or Monospaced.", position = 0, section = APPEARANCE)
-	default String fontFamily()
+	@ConfigItem(keyName = FONT_FAMILY, name = "Font family", description = "Choose a popup font family. System fonts must be installed on your computer.", position = 0, section = APPEARANCE)
+	default PopupFontFamily fontFamily()
 	{
-		return Font.SANS_SERIF;
+		return PopupFontFamily.SANS_SERIF;
+	}
+
+	@ConfigItem(keyName = "bold", name = "Bold", description = "Draw popup text in bold.", position = 1, section = APPEARANCE)
+	default boolean bold()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "outline", name = "Outline", description = "Draw a dark outline around the text.", position = 2, section = APPEARANCE)
+	default boolean outline()
+	{
+		return true;
+	}
+
+	@ConfigItem(keyName = "shadow", name = "Shadow", description = "Draw a drop shadow behind the text.", position = 3, section = APPEARANCE)
+	default boolean shadow()
+	{
+		return false;
 	}
 
 	@Range(min = MIN_FONT_SIZE, max = MAX_FONT_SIZE)
-	@ConfigItem(keyName = "fontSize", name = "Font size", description = "Bold text size in game pixels.", position = 1, section = APPEARANCE)
+	@ConfigItem(keyName = "fontSize", name = "Font size", description = "Text size in game pixels.", position = 4, section = APPEARANCE)
 	default int fontSize()
 	{
 		return 18;
 	}
 
-	@ConfigItem(keyName = "textColor", name = "Text color", description = "Popup text color.", position = 2, section = APPEARANCE)
+	@ConfigItem(keyName = "textColor", name = "Text color", description = "Popup text color.", position = 5, section = APPEARANCE)
 	default Color textColor()
 	{
 		return new Color(255, 83, 74);
 	}
 
 	@Range(min = MIN_TEXT_WIDTH, max = MAX_TEXT_WIDTH)
-	@ConfigItem(keyName = "maxTextWidth", name = "Maximum width (px)", description = "Wrap text at this width or the available viewport width, whichever is smaller.", position = 3, section = APPEARANCE)
+	@ConfigItem(keyName = "maxTextWidth", name = "Maximum width (px)", description = "Wrap text at this width or the available viewport width, whichever is smaller.", position = 6, section = APPEARANCE)
 	default int maxTextWidth()
 	{
 		return 420;
+	}
+
+	@ConfigItem(keyName = CUSTOM_FONT_FAMILY, name = "Custom font family", description = "An installed font family to use when Font family is set to Custom.", position = 7, section = APPEARANCE)
+	default String customFontFamily()
+	{
+		return "";
 	}
 
 	@Range(max = MAX_DELAY_MS)

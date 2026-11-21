@@ -13,6 +13,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -25,6 +26,7 @@ import net.runelite.client.util.Text;
 )
 public final class GameMessagePopupsPlugin extends Plugin
 {
+	private static final String LEGACY_FONT_FAMILY = "fontFamily";
 	private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
 	@Inject
@@ -32,6 +34,9 @@ public final class GameMessagePopupsPlugin extends Plugin
 
 	@Inject
 	private OverlayManager overlayManager;
+
+	@Inject
+	private ConfigManager configManager;
 
 	@Inject
 	private GameMessagePopupsConfig config;
@@ -47,6 +52,7 @@ public final class GameMessagePopupsPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		migrateFontFamily();
 		GameMessageOverlay newOverlay = new GameMessageOverlay(this, config);
 		overlayManager.add(newOverlay);
 		overlay = newOverlay;
@@ -98,6 +104,38 @@ public final class GameMessagePopupsPlugin extends Plugin
 		{
 			current.updateAppearance(config);
 		}
+	}
+
+	@Subscribe
+	public void onProfileChanged(ProfileChanged event)
+	{
+		migrateFontFamily();
+		GameMessageOverlay current = overlay;
+		if (current != null)
+		{
+			current.updateAppearance(config);
+		}
+	}
+
+	private void migrateFontFamily()
+	{
+		String group = GameMessagePopupsConfig.GROUP;
+		String previousFamily = configManager.getConfiguration(group, LEGACY_FONT_FAMILY);
+		if (previousFamily == null)
+		{
+			return;
+		}
+
+		if (config.fontFamily() == PopupFontFamily.SANS_SERIF)
+		{
+			PopupFontFamily choice = PopupFontFamily.fromSavedName(previousFamily);
+			if (choice == PopupFontFamily.CUSTOM && config.customFontFamily().isBlank())
+			{
+				configManager.setConfiguration(group, GameMessagePopupsConfig.CUSTOM_FONT_FAMILY, previousFamily.strip());
+			}
+			configManager.setConfiguration(group, GameMessagePopupsConfig.FONT_FAMILY, choice);
+		}
+		configManager.unsetConfiguration(group, LEGACY_FONT_FAMILY);
 	}
 
 	@Subscribe

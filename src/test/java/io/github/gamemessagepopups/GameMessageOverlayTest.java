@@ -1,16 +1,20 @@
 package io.github.gamemessagepopups;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -64,6 +68,37 @@ public class GameMessageOverlayTest
 		{
 			graphics.dispose();
 		}
+	}
+
+	@Test
+	public void updatesAnAlreadyVisibleMessageWhenTheFamilyAndBoldSettingChange()
+	{
+		GameMessageOverlay overlay = new GameMessageOverlay(null, new GameMessagePopupsConfig() {});
+		String message = "You cannot attack this target";
+		overlay.messages.add(message, 0, new MessageQueue.Timing(0, 1600, 650));
+		overlay.prepare(0, FIXED_VIEWPORT, FIXED_CANVAS);
+		Dimension initial = overlay.getBounds().getSize();
+
+		overlay.updateAppearance(new GameMessagePopupsConfig()
+		{
+			@Override
+			public PopupFontFamily fontFamily()
+			{
+				return PopupFontFamily.MONOSPACED;
+			}
+
+			@Override
+			public boolean bold()
+			{
+				return false;
+			}
+		});
+		overlay.prepare(0, FIXED_VIEWPORT, FIXED_CANVAS);
+
+		Font font = new Font(Font.MONOSPACED, Font.PLAIN, 18);
+		Dimension expected = MessageLayout.wrap(List.of(message), font, new Color(255, 83, 74), true, false, 420, 318).size;
+		assertNotEquals(initial, expected);
+		assertEquals(expected, overlay.getBounds().getSize());
 	}
 
 	@Test

@@ -24,6 +24,8 @@ final class MessageLayout
 	private static final int PADDING = 4;
 	private static final int MAX_LINES_PER_MESSAGE = 4;
 	private static final String ELLIPSIS = "…";
+	private static final int SHADOW_OFFSET = 2;
+	private static final Color SHADOW_COLOR = new Color(0, 0, 0, 175);
 	private static final Color OUTLINE_COLOR = new Color(22, 9, 9);
 	private static final BasicStroke OUTLINE = new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	private static final FontRenderContext FONT_CONTEXT = new FontRenderContext(null, true, true);
@@ -38,7 +40,7 @@ final class MessageLayout
 		this.blocks = blocks;
 	}
 
-	static MessageLayout wrap(List<String> messages, Font font, Color color, int maxWidth, int maxHeight)
+	static MessageLayout wrap(List<String> messages, Font font, Color color, boolean outline, boolean shadow, int maxWidth, int maxHeight)
 	{
 		if (messages.isEmpty() || maxWidth <= 2 * PADDING)
 		{
@@ -62,7 +64,7 @@ final class MessageLayout
 			int subsequentMessages = messages.size() - index - 1;
 			int rowLimit = Math.min(MAX_LINES_PER_MESSAGE, availableRows - subsequentMessages);
 			List<TextLayout> lines = wrapMessage(messages.get(index), font, maxWidth - 2 * PADDING, rowLimit);
-			BufferedImage image = renderBlock(lines, color, maxWidth, lineHeight, metrics.getAscent());
+			BufferedImage image = renderBlock(lines, color, outline, shadow, maxWidth, lineHeight, metrics.getAscent());
 			blocks.add(new Block(index, top, image));
 			width = Math.max(width, image.getWidth());
 			top += lines.size() * lineHeight;
@@ -85,7 +87,8 @@ final class MessageLayout
 		}
 	}
 
-	private static BufferedImage renderBlock(List<TextLayout> lines, Color color, int maxWidth, int lineHeight, float ascent)
+	private static BufferedImage renderBlock(List<TextLayout> lines, Color color, boolean outline, boolean shadow,
+		int maxWidth, int lineHeight, float ascent)
 	{
 		int textWidth = 0;
 		for (TextLayout line : lines)
@@ -106,8 +109,18 @@ final class MessageLayout
 			{
 				double x = width / 2.0 - line.getBounds().getCenterX();
 				Shape glyph = line.getOutline(AffineTransform.getTranslateInstance(x, baseline));
-				graphics.setColor(OUTLINE_COLOR);
-				graphics.draw(glyph);
+				if (shadow)
+				{
+					graphics.setColor(SHADOW_COLOR);
+					graphics.translate(SHADOW_OFFSET, SHADOW_OFFSET);
+					graphics.fill(glyph);
+					graphics.translate(-SHADOW_OFFSET, -SHADOW_OFFSET);
+				}
+				if (outline)
+				{
+					graphics.setColor(OUTLINE_COLOR);
+					graphics.draw(glyph);
+				}
 				graphics.setColor(color);
 				graphics.fill(glyph);
 				baseline += lineHeight;

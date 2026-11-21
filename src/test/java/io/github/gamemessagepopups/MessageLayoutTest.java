@@ -20,10 +20,10 @@ public class MessageLayoutTest
 	{
 		int maxWidth = 150;
 		int maxHeight = 180;
-		MessageLayout shortText = MessageLayout.wrap(List.of("Look out!"), FONT, Color.RED, maxWidth, maxHeight);
+		MessageLayout shortText = MessageLayout.wrap(List.of("Look out!"), FONT, Color.RED, true, false, maxWidth, maxHeight);
 		for (String text : List.of("The spell won't work on this target right now.", "X".repeat(150)))
 		{
-			MessageLayout wrapped = MessageLayout.wrap(List.of(text), FONT, Color.RED, maxWidth, maxHeight);
+			MessageLayout wrapped = MessageLayout.wrap(List.of(text), FONT, Color.RED, true, false, maxWidth, maxHeight);
 			assertTrue(wrapped.size.width <= maxWidth);
 			assertTrue(wrapped.size.height <= maxHeight);
 			assertTrue(wrapped.size.height > shortText.size.height);
@@ -35,20 +35,28 @@ public class MessageLayoutTest
 	{
 		Font large = FONT.deriveFont(48f);
 		List<String> messages = List.of("First ".repeat(30), "Second ".repeat(20), "Third");
-		MessageLayout layout = MessageLayout.wrap(messages, large, Color.RED, 496, 318);
+		MessageLayout layout = MessageLayout.wrap(messages, large, Color.RED, true, false, 496, 318);
 		assertTrue(layout.size.width <= 496);
 		assertTrue(layout.size.height <= 318);
 
-		MessageLayout oneRow = MessageLayout.wrap(messages, large, Color.RED, 496, 70);
-		MessageLayout newest = MessageLayout.wrap(List.of("Third"), large, Color.RED, 496, 70);
+		MessageLayout oneRow = MessageLayout.wrap(messages, large, Color.RED, true, false, 496, 70);
+		MessageLayout newest = MessageLayout.wrap(List.of("Third"), large, Color.RED, true, false, 496, 70);
 		assertEquals(newest.size, oneRow.size);
-		assertSame(MessageLayout.EMPTY, MessageLayout.wrap(messages, large, Color.RED, 496, 22));
+		assertSame(MessageLayout.EMPTY, MessageLayout.wrap(messages, large, Color.RED, true, false, 496, 22));
 	}
 
 	@Test
-	public void paintsBothFillAndOutlineAtTheRequestedOpacity()
+	public void paintsOutlineAndShadowIndependentlyAtTheRequestedOpacity()
 	{
-		MessageLayout layout = MessageLayout.wrap(List.of("Preview"), FONT, Color.RED, 360, 100);
+		assertDecorations(false, false);
+		assertDecorations(true, false);
+		assertDecorations(false, true);
+		assertDecorations(true, true);
+	}
+
+	private static void assertDecorations(boolean outline, boolean shadow)
+	{
+		MessageLayout layout = MessageLayout.wrap(List.of("Preview"), FONT, Color.RED, outline, shadow, 360, 100);
 		BufferedImage image = new BufferedImage(layout.size.width, layout.size.height, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = image.createGraphics();
 		try
@@ -62,6 +70,7 @@ public class MessageLayoutTest
 
 		boolean hasFill = false;
 		boolean hasOutline = false;
+		boolean hasShadow = false;
 		for (int y = 0; y < image.getHeight(); y++)
 		{
 			for (int x = 0; x < image.getWidth(); x++)
@@ -69,15 +78,17 @@ public class MessageLayoutTest
 				int pixel = image.getRGB(x, y);
 				int alpha = pixel >>> 24;
 				assertTrue(alpha <= 128);
-				if (alpha > 0)
+				if (alpha >= 64)
 				{
 					int red = (pixel >>> 16) & 255;
 					hasFill |= red == 255;
-					hasOutline |= red < 64;
+					hasOutline |= ((pixel >>> 8) & 255) >= 4;
+					hasShadow |= red == 0;
 				}
 			}
 		}
 		assertTrue(hasFill);
-		assertTrue(hasOutline);
+		assertEquals("outline", outline, hasOutline);
+		assertEquals("shadow", shadow, hasShadow);
 	}
 }
