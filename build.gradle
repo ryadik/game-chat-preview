@@ -1,0 +1,42 @@
+plugins {
+	id 'java'
+}
+
+repositories {
+	maven {
+		url = 'https://repo.runelite.net'
+		content {
+			includeGroupByRegex('net\\.runelite.*')
+		}
+	}
+	mavenCentral()
+}
+
+def runeLiteVersion = '1.13.7'
+def pluginMainClass = 'io.github.gamemessagepopups.DevLauncher'
+
+group = 'io.github.gamemessagepopups'
+version = '1.0.0'
+
+dependencies {
+	compileOnly('net.runelite:client:' + runeLiteVersion)
+	testImplementation('net.runelite:client:' + runeLiteVersion)
+	testImplementation('net.runelite:jshell:' + runeLiteVersion)
+	testImplementation 'junit:junit:4.13.2'
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.release.set(11)
+}
+
+tasks.named('test', Test) {
+	systemProperty 'java.awt.headless', 'true'
+}
+
+tasks.register('run', JavaExec) {
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = pluginMainClass
+	jvmArgs '-ea'
+	args '--developer-mode', '--debug'
+}
